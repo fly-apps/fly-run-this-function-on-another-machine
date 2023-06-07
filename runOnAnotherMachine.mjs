@@ -19,11 +19,9 @@ export default function runOnAnotherMachine(importMeta, originalFunc) {
   }
 
   const filename = url.fileURLToPath(importMeta.url);
-  addFunction(filename, originalFunc.name)
 
   return async function (...args) {
     const machine = await spawnAnotherMachine()
-    console.log(machine)
     const res = await execOnMachine(machine, filename, args)
     return res
   }
