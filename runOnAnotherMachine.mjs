@@ -13,10 +13,6 @@ const machinesService = axios.create({
   headers: { 'Authorization': `Bearer ${FLY_API_TOKEN}` }
 })
 
-const configDir = path.join(os.homedir(), '.runOnAnotherMachine')
-const configFile = path.join(configDir, 'functions.json')
-ensureSettings()
-
 export default function runOnAnotherMachine(importMeta, originalFunc) {
   if (IS_RUNNER) {
     return originalFunc
@@ -31,35 +27,6 @@ export default function runOnAnotherMachine(importMeta, originalFunc) {
     const res = await execOnMachine(machine, filename, args)
     return res
   }
-}
-
-function ensureSettings() {
-  try {
-    fs.mkdirSync(configDir)
-  } catch(err) {
-    if (err.code !== 'EEXIST') {
-      throw err
-    }
-  }
-  try {
-    fs.rmSync(configFile)
-  } catch(err) {
-    if (err.code !== 'ENOENT') {
-      throw err
-    }
-  }
-
-  fs.writeFileSync(configFile, JSON.stringify({}))
-}
-
-function addFunction(filename, funcName) {
-  const state = getCurrentState()
-  state[funcName] = filename
-  fs.writeFileSync(configFile, JSON.stringify(state), 'utf-8')
-}
-
-function getCurrentState() {
-  return JSON.parse(fs.readFileSync(configFile, 'utf-8'))
 }
 
 async function spawnAnotherMachine () {
