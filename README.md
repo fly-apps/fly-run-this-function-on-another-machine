@@ -55,5 +55,6 @@ If you look into your app Monitoring page, there will be a new machine.
 
 ## Next steps:
 
-- Stop machines after they're done
-- Reuse stopped machines
+- ~~Stop machines after they're done~~
+- ~~Reuse stopped machines~~
+- Pool machines?
