@@ -2,9 +2,57 @@ import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import axios from 'axios'
+import http from 'node:http'
 import * as url from 'url';
 
 const { IS_RUNNER, FLY_API_TOKEN, FLY_APP_NAME, FLY_IMAGE_REF } = process.env
+const port = 5500
+
+let processGroup
+if (FLY_IMAGE_REF.includes(':deployment-')) {
+  const deploymentId = FLY_IMAGE_REF.split(':deployment-').pop().toLocaleLowerCase()
+  processGroup = `worker-${deploymentId}`
+} else {
+  processGroup = `worker-${new Buffer(FLY_IMAGE_REF).toString('base64').toLocaleLowerCase()}`
+}
+
+if (IS_RUNNER) {
+  const requestHandler = (request, response) => {
+    console.log(request.url)
+    var body = "";
+
+    request.on('readable', function() {
+      let chunk
+      if (chunk = request.read()) {
+        console.log(chunk)
+        body += chunk
+      }
+    });
+
+    request.on('end', async function run() {
+        const { filename, args } = JSON.parse(body)
+
+        const mod = await import(filename)
+        const result = await mod.default(...args)
+        const jsonResponse = JSON.stringify({___result: result})
+        response.writeHead(200, { 'Content-Type': 'application/json' });
+        response.write(jsonResponse); 
+        response.end(); 
+
+        process.exit(0)
+    });
+  }
+  
+  const server = http.createServer(requestHandler)
+  
+  server.listen(port, (err) => {
+    if (err) {
+      return console.log('something bad happened', err)
+    }
+  
+    console.log(`server is listening on ${port}`)
+  })
+}
 
 const machinesService = axios.create({
   baseURL: `https://api.machines.dev/v1/apps/${FLY_APP_NAME}`,
@@ -17,6 +65,7 @@ export default function runOnAnotherMachine(importMeta, originalFunc) {
   }
 
   const filename = url.fileURLToPath(importMeta.url);
+  // const filename = "/app/runMath.mjs"
 
   return async function (...args) {
     const machine = await spawnAnotherMachine()
@@ -26,6 +75,8 @@ export default function runOnAnotherMachine(importMeta, originalFunc) {
 }
 
 async function spawnAnotherMachine () {
+  const filename = url.fileURLToPath(import.meta.url);
+
   const {data: machine} = await machinesService.post('/machines', {
     config: {
       auto_destroy: true,
@@ -36,10 +87,13 @@ async function spawnAnotherMachine () {
       processes: [
         {
           name: "runner",
-          entrypoint: ['tail'],
-          cmd: ['-f', "/dev/null"]
+          entrypoint: ['node'],
+          cmd: [filename]
         }
-      ]
+      ],
+      metadata: {
+        fly_process_group: processGroup
+      }
     }
   })
 
@@ -50,20 +104,11 @@ async function spawnAnotherMachine () {
 
 async function execOnMachine(machine, filename, args) {
   const jsonArgs = JSON.stringify(args)
-
-  const code = `(async function () {
-    const mod = await import('${filename}')
-    const args = ${jsonArgs}
-    const result = await mod.default(...args)
-    const jsonResponse = JSON.stringify({___result: result})
-    return console.log(jsonResponse)
-  })()`
-
-  const cmd = `node --eval="${code}"`
-  const execRes = await machinesService.post(`/machines/${machine.id}/exec`, {
-    cmd
+  
+  const execRes = await axios.post(`http://${processGroup}.process.${FLY_APP_NAME}.internal:${port}`, {
+    filename,
+    args
   })
 
-  const final = JSON.parse(execRes.data.stdout)
-  return final.___result
+  return execRes.data.___result
 }
