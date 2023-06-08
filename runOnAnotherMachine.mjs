@@ -133,8 +133,12 @@ async function spawnAnotherMachine () {
 }
 
 async function checkIfThereAreWorkers() {
-  const res = await workerService.get('/')
-  return res.status === 200 && res.data.ok
+  try {
+    const res = await workerService.get('/')
+    return res.status === 200 && res.data.ok
+  } catch (err) {
+    return false
+  }
 }
 
 async function execOnMachine(filename, args) {
