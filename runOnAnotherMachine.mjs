@@ -8,6 +8,7 @@ import * as url from 'url';
 const { IS_RUNNER, FLY_API_TOKEN, FLY_APP_NAME, FLY_IMAGE_REF, IS_LOCAL_DEV } = process.env
 const port = 5500
 const timeUntilStop = 5 * 60 * 1000
+let exitTimeout
 
 let processGroup
 if (FLY_IMAGE_REF.includes(':deployment-')) {
@@ -31,18 +32,6 @@ if (IS_LOCAL_DEV) {
 const workerService = axios.create({ baseURL: workerBaseUrl })
 
 if (IS_RUNNER) {
-  let exitTimeout
-
-  function scheduleStop() {
-    clearInterval(exitTimeout)
-
-    exitTimeout = setTimeout(() => {
-      process.exit(0)
-    }, timeUntilStop)
-
-    console.info(`Server will stop in ${timeUntilStop}ms`)
-  }
-
   const requestHandler = (request, response) => {
     scheduleStop()
     console.info(`Received ${request.method} request`)
@@ -93,7 +82,6 @@ export default function runOnAnotherMachine(importMeta, originalFunc) {
   }
 
   const filename = url.fileURLToPath(importMeta.url);
-  // const filename = "/app/runMath.mjs"
 
   return async function (...args) {
     if (!(await checkIfThereAreWorkers())) {
@@ -150,4 +138,14 @@ async function execOnMachine(filename, args) {
   })
 
   return execRes.data.___result
+}
+
+function scheduleStop() {
+  clearInterval(exitTimeout)
+
+  exitTimeout = setTimeout(() => {
+    process.exit(0)
+  }, timeUntilStop)
+
+  console.info(`Server will stop in ${timeUntilStop}ms`)
 }
