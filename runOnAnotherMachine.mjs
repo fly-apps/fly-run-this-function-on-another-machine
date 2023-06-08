@@ -45,14 +45,14 @@ if (IS_RUNNER) {
     });
 
     request.on('end', async function run() {
-        const { filename, args } = JSON.parse(body)
+      const { filename, args } = JSON.parse(body)
 
-        const mod = await import(filename)
-        const result = await mod.default(...args)
-        const jsonResponse = JSON.stringify({___result: result})
-        response.writeHead(200, { 'Content-Type': 'application/json' });
-        response.write(jsonResponse); 
-        response.end();
+      const mod = await import(filename)
+      const result = await mod.default(...args)
+      const jsonResponse = JSON.stringify({___result: result})
+      response.writeHead(200, { 'Content-Type': 'application/json' });
+      response.write(jsonResponse); 
+      response.end();
     });
   }
   
