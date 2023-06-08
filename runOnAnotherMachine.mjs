@@ -7,6 +7,7 @@ import * as url from 'url';
 
 const { IS_RUNNER, FLY_API_TOKEN, FLY_APP_NAME, FLY_IMAGE_REF } = process.env
 const port = 5500
+const timeUntilStop = 5 * 60 * 1000
 
 let processGroup
 if (FLY_IMAGE_REF.includes(':deployment-')) {
@@ -17,7 +18,21 @@ if (FLY_IMAGE_REF.includes(':deployment-')) {
 }
 
 if (IS_RUNNER) {
+  let exitTimeout
+
+  function scheduleStop() {
+    clearInterval(exitTimeout)
+
+    exitTimeout = setTimeout(() => {
+      process.exit(0)
+    }, timeUntilStop)
+
+    console.info(`Server will stop in ${timeUntilStop}ms`)
+  }
+
   const requestHandler = (request, response) => {
+    scheduleStop()
+
     console.log(request.url)
     var body = "";
 
@@ -37,9 +52,7 @@ if (IS_RUNNER) {
         const jsonResponse = JSON.stringify({___result: result})
         response.writeHead(200, { 'Content-Type': 'application/json' });
         response.write(jsonResponse); 
-        response.end(); 
-
-        process.exit(0)
+        response.end();
     });
   }
   
@@ -49,8 +62,9 @@ if (IS_RUNNER) {
     if (err) {
       return console.log('something bad happened', err)
     }
-  
-    console.log(`server is listening on ${port}`)
+
+    console.log(`Server is listening on ${port}`)
+    scheduleStop()
   })
 }
 
