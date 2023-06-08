@@ -76,29 +76,39 @@ if (IS_RUNNER) {
   })
 }
 
-export default function runOnAnotherMachine(importMeta, originalFunc) {
+export default function runOnAnotherMachine(originalFunc, config) {
   if (IS_RUNNER) {
     return originalFunc
   }
 
-  const filename = url.fileURLToPath(importMeta.url);
+  const { 
+    meta, 
+    guest = {
+      cpu_kind: "shared",
+      cpus: 1,
+      memory_mb: 256
+    } 
+  } = config
+
+  const filename = url.fileURLToPath(config.meta.url);
 
   return async function (...args) {
     if (!(await checkIfThereAreWorkers())) {
-      await spawnAnotherMachine()
+      await spawnAnotherMachine(guest)
     }
 
     return await execOnMachine(filename, args)
   }
 }
 
-async function spawnAnotherMachine () {
+async function spawnAnotherMachine(guest) {
   const filename = url.fileURLToPath(import.meta.url);
 
   const {data: machine} = await machinesService.post('/machines', {
     config: {
       auto_destroy: true,
       image: FLY_IMAGE_REF,
+      guest,
       env: {
         IS_RUNNER: "1"
       },

@@ -1,5 +1,12 @@
 import runOnAnotherMachine from "./runOnAnotherMachine.mjs"
 
-export default runOnAnotherMachine(import.meta, function runMath(a, b) {
+export default runOnAnotherMachine(function runMath(a, b) {
   return a + b
+}, {
+  meta: import.meta,
+  guest: {
+    cpu_kind: "shared",
+    cpus: 2,
+    memory_mb: 1024
+  }
 })
