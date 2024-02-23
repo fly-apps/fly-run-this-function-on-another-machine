@@ -1,8 +1,20 @@
-## Fly.io: Run this function in another machine
+## FLAME for JavaScript: Run a function on another Machine
 
-This is a simple example on how to spawn a machine and run a function from there.
+![Bird throwing fireballs](./javascript-flame-throwing-bird.jpg)
 
-Your app will need a Fly token to be able to spawn new machines.
+This is a simple example app demonstrating how to run a particular function on a temporary copy of your app, using the FLAME pattern. Checkout the blog post that explains this code in more detail: https://fly.io/javascript-journal/flame-for-javascript-rethinking-serverless
+
+FLAME (Fleeting Lambda Application for Modular Execution), which was first introduced by Chris McCord, creator of the Phoenix framework, was originally demo'ed in an Elixir library. This app is a case study on how it can be implemented in vanilla JavaScript. FLAME is a new way to horizontally auto-scale your application code in a more modular way. You can read more about it in Chris's post here: https://fly.io/blog/rethinking-serverless-with-flame/
+
+## Prerequisites
+
+While FLAME is a cloud-provider-agnostic pattern, this project uses Fly.io's Machines API to auto-scale your code. As such, **your app will need a [Fly token](https://fly.io/docs/flyctl/auth-token/) to be able to spawn new machines.**
+
+If you already have the `flyctl` CLI installed, you can run the following to obtain a new token:
+
+```cmd
+$ flyctl auth token [flags]
+```
 
 ## Deploying this demo
 
