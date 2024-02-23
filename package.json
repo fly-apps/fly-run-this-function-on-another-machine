@@ -1,8 +1,8 @@
 {
-  "name": "run-this-on-anothe-machine",
+  "name": "flame-with-javascript",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "index.mjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -1,13 +1,13 @@
-import runOnAnotherMachine from "./runOnAnotherMachine.mjs"
+import flame from "./flame.mjs"
 
-export default runOnAnotherMachine(async function runMath(a, b) {
+export default flame(async function runMath(a, b) {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve(a + b)
     }, 5000)
   })
 }, {
-  meta: import.meta,
+  path: import.meta.url,
   guest: {
     cpu_kind: "shared",
     cpus: 2,

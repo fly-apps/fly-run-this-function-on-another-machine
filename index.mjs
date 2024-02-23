@@ -1,7 +1,8 @@
 import runMath from './runMath.mjs'
 
 async function main() {
-  console.log(await runMath(100, 20))
+  const result = await runMath(100, 20);
+  console.log(result)
 }
 
 main()
